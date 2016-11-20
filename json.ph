@@ -41,7 +41,8 @@ our $jsonInterval;
 my ($jsonSubsys, $jsonDebug, $jsonCOFlag, $jsonTTL, $jsonFilename, $jsonSumFlag);
 my (%jsonDataLast, %jsonDataMin, %jsonDataMax, %jsonDataTot, %jsonTTL);
 my ($jsonColInt, $jsonSendCount, $jsonFlags);
-my ($jsonMinFlag, $jsonMaxFlag, $jsonAvgFlag, $jsonPrettyFlag, $jsonTotFlag)=(0,0,0,0,0);
+my ($jsonMinFlag, $jsonMaxFlag, $jsonAvgFlag, $jsonTotFlag)=(0,0,0,0);
+my ($jsonPrettyFlag, $jsonIndividualFlag) = (0,0);
 my $jsonOnePB=1024*1024*1024*1024*1024;
 my $jsonSamples=0;
 my $jsonOutputFlag=1;
@@ -79,7 +80,7 @@ sub jsonInit
   foreach my $option (@_)
   {
     my ($name, $value)=split(/=/, $option, 2);   # in case more than 1 = in single option string
-    error("invalid json option '$name'")    if $name!~/^[dfhisx]?$|^align$|^co$|^ttl$|^min$|^max$|^avg$|^tot$|^pretty$/;
+    error("invalid json option '$name'")    if $name!~/^[dfhisx]?$|^align$|^co$|^ttl$|^min$|^max$|^avg$|^tot$|^pretty$|^indiv$/;
 
     $jsonAlignFlag=1        if $name eq 'align';
     $jsonCOFlag=1           if $name eq 'co';
@@ -94,6 +95,7 @@ sub jsonInit
     $jsonAvgFlag=1          if $name eq 'avg';
     $jsonTotFlag=1          if $name eq 'tot';
     $jsonPrettyFlag=1       if $name eq 'pretty';
+    $jsonIndividualFlag=1   if $name eq 'indiv';
 
     help()                 if $name eq 'h';
 
@@ -247,6 +249,10 @@ sub json {
       $jsonSample{'cpuload'}{'norm'}{'avg5'}  = setData('cpuload.avg5',  $loadAvg5/$NumCpus, 1, '%4.2f');
       $jsonSample{'cpuload'}{'norm'}{'avg15'} = setData('cpuload.avg15', $loadAvg15/$NumCpus, 1,'%4.2f');
     }
+    if ($jsonIndividualFlag) {
+      $jsonSample{'metricset'} = 'cpu';
+      outputAndResetSample();
+    }
   }
 
   if ($jsonSubsys=~/d/i)
@@ -280,6 +286,10 @@ sub json {
         $jsonSample{'diskinfo'}{$dskName}{'util'}     = setData('diskinfo.util.'.$dskName,     $dskUtil[$i]/$intSecs);
       }
     }
+    if ($jsonIndividualFlag) {
+      $jsonSample{'metricset'} = 'diskio';
+      outputAndResetSample();
+    }
   }
 
   if ($jsonSubsys=~/f/)
@@ -298,6 +308,10 @@ sub json {
       $jsonSample{'nfsinfo'}{'client'}{'meta'}   = setData('nfsinfo.Cmeta',  $nfsCMetaTot/$intSecs);
       $jsonSample{'nfsinfo'}{'client'}{'commit'} = setData('nfsinfo.Ccommit',$nfsCCommitTot/$intSecs);
     }
+    if ($jsonIndividualFlag) {
+      $jsonSample{'metricset'} = 'nfs';
+      outputAndResetSample();
+    }
   }
 
   if ($jsonSubsys=~/i/)
@@ -307,6 +321,10 @@ sub json {
     $jsonSample{'inodeinfo'}{'filesalloc'}   = setData('inodeinfo.filesalloc',   $filesAlloc, 1);
     $jsonSample{'inodeinfo'}{'filesmax'}     = setData('inodeinfo.filesmax',     $filesMax, 1);
     $jsonSample{'inodeinfo'}{'inodeused'}    = setData('inodeinfo.inodeused',    $inodeUsed, 1);
+    if ($jsonIndividualFlag) {
+      $jsonSample{'metricset'} = 'inodes';
+      outputAndResetSample();
+    }
   }
 
   if ($jsonSubsys=~/l/)
@@ -339,6 +357,10 @@ sub json {
       $jsonSample{'lustre'}{'ost'}{'readkbs'}  = setData('lusost.readkbs',  $lustreReadKBytesTot/$intSecs);
       $jsonSample{'lustre'}{'ost'}{'writes'}   = setData('lusost.writes',   $lustreWriteOpsTot/$intSecs);
       $jsonSample{'lustre'}{'ost'}{'writekbs'} = setData('lusost.writekbs', $lustreWriteKBytesTot/$intSecs);
+    }
+    if ($jsonIndividualFlag) {
+      $jsonSample{'metricset'} = 'lustre';
+      outputAndResetSample();
     }
   }
 
@@ -384,6 +406,10 @@ sub json {
         }
       }
     }
+    if ($jsonIndividualFlag) {
+      $jsonSample{'metricset'} = 'memory';
+      outputAndResetSample();
+    }
   }
 
   if ($jsonSubsys=~/n/i)
@@ -411,6 +437,10 @@ sub json {
         $jsonSample{'netinfo'}{$netName}{'pktout'} = setData('netinfo.pktout.$netName', $netTxPkt[$i]/$intSecs);
       }
     }
+    if ($jsonIndividualFlag) {
+      $jsonSample{'metricset'} = 'network';
+      outputAndResetSample();
+    }
   }
 
   if ($jsonSubsys=~/s/)
@@ -425,6 +455,10 @@ sub json {
     $jsonSample{'sockinfo'}{'raw'}    = setData('sockinfo.raw', $sockRaw, 1);
     $jsonSample{'sockinfo'}{'frag'}   = setData('sockinfo.frag', $sockFrag, 1);
     $jsonSample{'sockinfo'}{'fragm'}  = setData('sockinfo.fragm', $sockFragM, 1);
+    if ($jsonIndividualFlag) {
+      $jsonSample{'metricset'} = 'sockets';
+      outputAndResetSample();
+    }
   }
 
   if ($jsonSubsys=~/t/)
@@ -434,6 +468,10 @@ sub json {
     $jsonSample{'tcpinfo'}{'udperrs'}  = setData('tcpinfo.udperrs',  $udpErrors/$intSecs)      if $tcpFilt=~/u/;
     $jsonSample{'tcpinfo'}{'icmperrs'} = setData('tcpinfo.icmperrs', $icmpErrors/$intSecs)     if $tcpFilt=~/c/;
     $jsonSample{'tcpinfo'}{'tcpxerrs'} = setData('tcpinfo.tcpxerrs', $tcpExErrors/$intSecs)    if $tcpFilt=~/T/;
+    if ($jsonIndividualFlag) {
+      $jsonSample{'metricset'} = 'tcp';
+      outputAndResetSample();
+    }
   }
 
   if ($jsonSubsys=~/x/i)
@@ -467,6 +505,10 @@ sub json {
         }
       }
     }
+    if ($jsonIndividualFlag) {
+      $jsonSample{'metricset'} = 'infiniband';
+      outputAndResetSample();
+    }
   }
 
   if ($jsonSubsys=~/E/i)
@@ -490,8 +532,14 @@ sub json {
         $jsonSample{'env'}{$name.$inst} = setData('env.'.$name.$inst, $ipmiData->{$key}->[$i]->{value}, 1, $format);
       }
     }
+    if ($jsonIndividualFlag) {
+      $jsonSample{'metricset'} = 'environment';
+      outputAndResetSample();
+    }
   }
-  outputAndResetSample();
+  if (!$jsonIndividualFlag) {
+    outputAndResetSample();
+  }
 } # End json
 
 sub outputAndResetSample {
@@ -586,6 +634,8 @@ usage: --export=json[,options]
     max         report maximum value since last report
     min         report minimal value since last report
     tot		report total values (as makes sense) since last report
+    pretty      output 'pretty' JSON spread over multiple lines, machine consumers may not like this
+    indiv       output a separate json object for each metric set
 EOF
 
   print $text;
