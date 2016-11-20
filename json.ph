@@ -41,7 +41,7 @@ our $jsonInterval;
 my ($jsonSubsys, $jsonDebug, $jsonCOFlag, $jsonTTL, $jsonFilename, $jsonSumFlag);
 my (%jsonDataLast, %jsonDataMin, %jsonDataMax, %jsonDataTot, %jsonTTL);
 my ($jsonColInt, $jsonSendCount, $jsonFlags);
-my ($jsonMinFlag, $jsonMaxFlag, $jsonAvgFlag, $jsonTotFlag)=(0,0,0,0);
+my ($jsonMinFlag, $jsonMaxFlag, $jsonAvgFlag, $jsonPrettyFlag, $jsonTotFlag)=(0,0,0,0,0);
 my $jsonOnePB=1024*1024*1024*1024*1024;
 my $jsonSamples=0;
 my $jsonOutputFlag=1;
@@ -49,6 +49,7 @@ my $jsonFirstInt=1;
 my $jsonAlignFlag=0;
 my $jsonCounter;
 my $jsonExtName='';
+my %jsonSample;
 
 $jsonFlag   = (eval {require "JSON.pm" or die}) ? 1 : 0;
 $roundFlag  = (eval {require "Math::Round" or die}) ? 1 : 0;
@@ -78,7 +79,7 @@ sub jsonInit
   foreach my $option (@_)
   {
     my ($name, $value)=split(/=/, $option, 2);   # in case more than 1 = in single option string
-    error("invalid jsonpr option '$name'")    if $name!~/^[dfhisx]?$|^align$|^co$|^ttl$|^min$|^max$|^avg$|^tot$/;
+    error("invalid json option '$name'")    if $name!~/^[dfhisx]?$|^align$|^co$|^ttl$|^min$|^max$|^avg$|^tot$|^pretty$/;
 
     $jsonAlignFlag=1        if $name eq 'align';
     $jsonCOFlag=1           if $name eq 'co';
@@ -92,6 +93,7 @@ sub jsonInit
     $jsonMaxFlag=1          if $name eq 'max';
     $jsonAvgFlag=1          if $name eq 'avg';
     $jsonTotFlag=1          if $name eq 'tot';
+    $jsonPrettyFlag=1       if $name eq 'pretty';
 
     help()                 if $name eq 'h';
 
@@ -186,7 +188,6 @@ sub jsonInit
 } # End jsonInit
 
 sub json {
-  my %jsonSample;
   
   if ($jsonSubsys=~/c/i)
   {
@@ -490,12 +491,21 @@ sub json {
       }
     }
   }
+  outputAndResetSample();
+} # End json
 
+sub outputAndResetSample {
   $jsonSample{'timestamp'} = $lastSecs[$rawPFlag];
 
   # Output happens here
-  print JSON->new->utf8->allow_nonref->encode(\%jsonSample)."\n";
-} # End json
+  if ($jsonPrettyFlag) {
+    print JSON->new->utf8->pretty->allow_nonref->encode(\%jsonSample)."\n";
+  } else {
+    print JSON->new->utf8->allow_nonref->encode(\%jsonSample)."\n";
+  }
+
+  %jsonSample = ();
+}
 
 sub setData {
   my $name  = shift;
@@ -571,7 +581,7 @@ usage: --export=json[,options]
     s=subsys    only report subsystems, must be a subset of collectl's -s
     ttl=num     if data hasn't changed for this many intervals, report it
                 only used with 'co', def=5
-    x=file      do a 'require' on specified file to extend jsonpr functionality
+    x=file      do a 'require' on specified file to extend json functionality
     avg         report average of values since last report    
     max         report maximum value since last report
     min         report minimal value since last report
