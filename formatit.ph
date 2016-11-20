@@ -2645,7 +2645,7 @@ sub dataAnalyze
     }
   }
 
-  elsif ($subsys=~/c/ && $type=~/^load/)
+  elsif ($subsys=~/c/i && $type=~/^load/)
   {
     ($loadAvg1, $loadAvg5, $loadAvg15, $loadProcs)=split(/\s+/, $data);
     if (!defined($loadProcs))
@@ -2658,7 +2658,7 @@ sub dataAnalyze
     $loadRun--;   # never count ourself!
   }
 
-  elsif ($subsys=~/c/ && $type=~/^procs/)
+  elsif ($subsys=~/c/i && $type=~/^procs/)
   {
     # never include ourselves in count of running processes
     $data=(split(/\s+/, $data))[0];
@@ -3162,21 +3162,21 @@ sub dataAnalyze
     #print "DISK[$lusDisk][$bufNum]  R: $lusDiskReads[$lusDisk][$bufNum]  W: $lusDiskWrites[$lusDisk][$bufNum]\n";
   }
 
-  elsif ($subsys=~/c/ && $type=~/^intr/)
+  elsif ($subsys=~/c/i && $type=~/^intr/)
   {
     $intrptNow=$data;
     $intrpt=fix($intrptNow-$intrptLast);
     $intrptLast=$intrptNow;
   }
 
-  elsif ($subsys=~/c/ && $type=~/^ctx/)
+  elsif ($subsys=~/c/i && $type=~/^ctx/)
   {
     $ctxtNow=$data;
     $ctxt=fix($ctxtNow-$ctxtLast);
     $ctxtLast=$ctxtNow;
   }
 
-  elsif ($subsys=~/c/ && $type=~/^proce/)
+  elsif ($subsys=~/c/i && $type=~/^proce/)
   {
     $procNow=$data;
     $proc=fix($procNow-$procLast);
