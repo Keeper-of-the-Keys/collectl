@@ -543,15 +543,23 @@ sub json {
 } # End json
 
 sub outputAndResetSample {
+  my $output;
   $jsonSample{'timestamp'} = $lastSecs[$rawPFlag];
 
-  # Output happens here
   if ($jsonPrettyFlag) {
-    print JSON->new->utf8->pretty->allow_nonref->encode(\%jsonSample)."\n";
+    $output = JSON->new->utf8->pretty->allow_nonref->encode(\%jsonSample)."\n";
   } else {
-    print JSON->new->utf8->allow_nonref->encode(\%jsonSample)."\n";
+    $output = JSON->new->utf8->allow_nonref->encode(\%jsonSample)."\n";
   }
 
+  if ($sockFlag || $jsonFilename eq '') {
+    printText($output, 1);
+  } elsif ($jsonFilename ne '') {
+    open  EXP, ">>$jsonFilename" or logmsg("F", "Couldn't create '$jsonFilename'");
+    print EXP  $output;
+    close EXP;
+  }
+  
   %jsonSample = ();
 }
 
@@ -621,9 +629,9 @@ sub help {
 usage: --export=json[,options]
   where each option is separated by a comma, noting some take args themselves
     align       align output to whole minute boundary
-    co          only reports changes since last reported value
+    co          only reports changes since last reported value (not implented)
     d=mask      debugging options, see beginning of graphite.ph for details
-    f=file      snapshot filename
+    f=file      log filename
     h           print this help and exit
     i=seconds   reporting interval, must be multiple of collect's -i
     s=subsys    only report subsystems, must be a subset of collectl's -s
