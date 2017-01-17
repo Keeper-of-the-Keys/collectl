@@ -37,7 +37,7 @@
 #       (useful when displaying normal output on terminal)
 #  16 - show 'x' processing
 
-our $jsonInterval;
+our ($jsonInterval, $subsys);
 my ($jsonSubsys, $jsonDebug, $jsonCOFlag, $jsonTTL, $jsonFilename, $jsonSumFlag);
 my (%jsonDataLast, %jsonDataMin, %jsonDataMax, %jsonDataTot, %jsonTTL);
 my ($jsonColInt, $jsonSendCount, $jsonFlags);
@@ -537,6 +537,51 @@ sub json {
       outputAndResetSample();
     }
   }
+
+  # if any imported data, it may want to include lexpr output AND we do a little more work to
+  # separate the summary from the detail. also, in case any variables are gauges and we're doing
+  # totals we'll need to know that as well as non-string formatting.  There is a bit of magic here,
+  # perhaps the easiest example in misc.ph where it reports the uptime as a fracion of a day.  Here
+  # it passes the summary-data formatting in ref7.  Also note since it does distinguish between
+  # summary and detail data, it you want to change the formats of both, you'd need to set ref7 and
+  # ref8 in their appropriate sections of the printExport code.
+  my (@nameS, @valS, @nameD, @valD, @gaugeS, @gaugeD, @fmtS, @fmtD);
+  my ($impSumString, $impDetString)=('','');
+
+  for (my $i=0; $i<$impNumMods; $i++) { 
+    &{$impPrintExport[$i]}('l', \@nameS, \@valS, \@nameD, \@valD, \@gaugeS, \@gaugeD, \@fmtS, \@fmtD); 
+  }
+
+  foreach (my $i=0; $i<scalar(@nameS); $i++) { 
+#    $impSumString.=sendData($nameS[$i], $valS[$i], $gaugeS[$i], $fmtS[$i]); 
+     my @split_key = split /\./, $nameS[$i];
+     my $ref = \%jsonSample;
+     my $lastref = $ref;
+     foreach my $subkey (@split_key) {
+	 $lastref = $ref;
+	 $ref->{$subkey} //= {};
+	 $ref = $ref->{$subkey};
+     }
+     $lastref->{$split_key[-1]} = $valS[$i];
+     
+  }
+
+  foreach (my $i=0; $i<scalar(@nameD); $i++) { 
+      #    $impDetString.=sendData($nameD[$i], $valD[$i], $gaugeD[$i], $fmtD[$i]);
+      my @split_key = split /\./, $nameD[$i];
+      my $ref = \%jsonSample;
+      my $last_ref = $ref;
+      foreach my $subkey (@split_key) {
+	  $lastref = $ref;
+	  $ref->{$subkey} //= {};
+	  $ref = $ref->{$subkey};
+      }
+      $lastref->{$split_key[-1]} = $valD[$i];
+  }
+
+  $lexSumFlag=1    if $impSumString ne '';   # in case not already set
+
+
   if (!$jsonIndividualFlag) {
     outputAndResetSample();
   }
