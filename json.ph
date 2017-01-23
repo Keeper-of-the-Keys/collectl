@@ -579,7 +579,7 @@ sub json {
       $lastref->{$split_key[-1]} = $valD[$i];
   }
 
-  $lexSumFlag=1    if $impSumString ne '';   # in case not already set
+  $jsonSumFlag=1    if $impSumString ne '';   # in case not already set
 
 
   if (!$jsonIndividualFlag) {
