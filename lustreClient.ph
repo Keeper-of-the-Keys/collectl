@@ -1582,19 +1582,19 @@ sub lustreClientPrintExport {
   } elsif ($type eq 'l') {
     if ($lustOpts =~ /s/) {
       if ($cltFlag) {
-        push @$ref1, "lusclt.reads";
+        push @$ref1, "lustre.client.reads";
         push @$ref2, $lustreCltReadTot / $intSecs;
         
-        push @$ref1, "lusclt.readkbs";
+        push @$ref1, "lustre.client.readkbs";
         push @$ref2, $lustreCltReadKBTot / $intSecs;
         
-        push @$ref1, "lusclt.writes";
+        push @$ref1, "lustre.client.writes";
         push @$ref2, $lustreCltWriteTot / $intSecs;
 
-        push @$ref1, "lusclt.writekbs";
+        push @$ref1, "lustre.client.writekbs";
         push @$ref2, $lustreCltWriteKBTot / $intSecs;
 
-        push @$ref1, "lusclt.numfs";
+        push @$ref1, "lustre.client.numfs";
         push @$ref2, $numClientFS;
       }
     }
