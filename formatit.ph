@@ -4397,12 +4397,11 @@ sub dataAnalyze
       {
         my ($port, @fieldsNow)=(split(/\s+/, $data))[0,4..7];
 
-        for ($j=0; $j<3; $j++)
+        for ($j=0; $j<=3; $j++)
         {
           $fields[$j]=fix($fieldsNow[$j]-$ibFieldsLast[$i][$port][$j]);
           $ibFieldsLast[$i][$port][$j]=$fieldsNow[$j];
         }
-
         $ibTxKB[$i]=$fields[0]/256;
         $ibTx[$i]=  $fields[2];
         $ibRxKB[$i]=$fields[1]/256;
