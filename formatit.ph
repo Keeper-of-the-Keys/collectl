@@ -4402,12 +4402,8 @@ sub dataAnalyze
           $fields[$j]=fix($fieldsNow[$j]-$ibFieldsLast[$i][$port][$j]);
           $ibFieldsLast[$i][$port][$j]=$fieldsNow[$j];
         }
-<<<<<<< HEAD
 
 	$ibTxKB[$i]=$fields[0]/256;
-=======
-        $ibTxKB[$i]=$fields[0]/256;
->>>>>>> eeb9ceddc4da85c9d5add70a8794594708c8aaea
         $ibTx[$i]=  $fields[2];
         $ibRxKB[$i]=$fields[1]/256;
         $ibRx[$i]=  $fields[3];
